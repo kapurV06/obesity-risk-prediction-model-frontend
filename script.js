@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
     resultDiv.style.color = "#88c0d0";
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/predict", {
+      const response = await fetch("https://web-production-9048c.up.railway.app/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -124,4 +124,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+
 
