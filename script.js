@@ -40,7 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
       input.value = Math.floor((feature.min + feature.max) / 2);
       input.step = 1;
       input.required = true;
-      input.title = `Range: ${feature.min}-${feature.max} ${feature.unit || ""}`.trim();
 
       const valueDisplay = document.createElement("span");
       valueDisplay.textContent = `${input.value} ${feature.unit || ""}`;
@@ -81,7 +80,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = Object.fromEntries(formData.entries());
 
     const resultDiv = document.getElementById("result");
+    const suggestionsDiv = document.getElementById("suggestions");
     resultDiv.textContent = "Predicting...";
+    suggestionsDiv.innerHTML = "";
     resultDiv.style.color = "#88c0d0";
 
     try {
@@ -118,9 +119,24 @@ document.addEventListener("DOMContentLoaded", () => {
         };
       }
 
+      // ⬇️ Lifestyle Suggestions
+      if (result.suggestions && result.suggestions.length > 0) {
+        const suggestionsList = result.suggestions
+          .map(s => `<li>🔹 ${s}</li>`)
+          .join("");
+
+        suggestionsDiv.innerHTML = `
+          <div class="bg-[#e5f4ff] p-4 rounded-lg shadow mt-4">
+            <h3 class="text-lg font-medium text-nord14 mb-2">Lifestyle Suggestions</h3>
+            <ul class="list-disc pl-5 text-sm text-gray-800">${suggestionsList}</ul>
+          </div>
+        `;
+      }
+
     } catch (error) {
       resultDiv.textContent = "Server error. Is Flask running?";
       resultDiv.style.color = "#bf616a";
+      suggestionsDiv.innerHTML = "";
     }
   });
 });
