@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
     wrapper.appendChild(label);
 
     let input;
+
     if (feature.type === "range") {
       input = document.createElement("input");
       input.type = "range";
@@ -39,7 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
       input.max = feature.max;
       input.value = Math.floor((feature.min + feature.max) / 2);
       input.step = 1;
-      input.required = true;
 
       const valueDisplay = document.createElement("span");
       valueDisplay.textContent = `${input.value} ${feature.unit || ""}`;
@@ -52,17 +52,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
       wrapper.appendChild(input);
       wrapper.appendChild(valueDisplay);
-
     } else if (feature.type === "select") {
       input = document.createElement("select");
       input.name = feature.name;
       input.id = feature.name;
-      input.required = true;
 
-      feature.options.forEach(opt => {
+      feature.options.forEach((opt, index) => {
         const option = document.createElement("option");
         option.value = opt;
         option.textContent = opt;
+        if (index === 0) option.selected = true; // always select a valid default
         input.appendChild(option);
       });
 
@@ -72,7 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
     inputFields.appendChild(wrapper);
   });
 
-  // Handle prediction
   document.getElementById("predictForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -82,11 +80,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultDiv = document.getElementById("result");
     const suggestionsDiv = document.getElementById("suggestions");
     resultDiv.textContent = "Predicting...";
+    resultDiv.style.color = "#888";
     suggestionsDiv.innerHTML = "";
-    resultDiv.style.color = "#88c0d0";
 
     try {
-      const response = await fetch("https://web-production-9048c.up.railway.app/predict", {
+      const response = await fetch("https://obesity-risk-prediction-model-backend1-production.up.railway.app/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -94,52 +92,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const result = await response.json();
 
-      const categoryMap = {
-        "Insufficient_Weight": "Underweight",
-        "Normal_Weight": "Healthy",
-        "Overweight_Level_I": "Borderline Obese",
-        "Overweight_Level_II": "Borderline Obese",
-        "Obesity_Type_I": "Obese (Class 1)",
-        "Obesity_Type_II": "Obese (Class 2)",
-        "Obesity_Type_III": "Obese (Morbid)"
-      };
+      if (result.status === "success") {
+        const category = result.category || "Unknown";
+        const modelLabel = result.model_prediction || "Unknown";
+        const correctedLabel = result.corrected_prediction || "Unknown";
+        const bmi = result.bmi || "N/A";
 
-      const displayLabel = result.prediction ? categoryMap[result.prediction] || result.prediction : null;
+        resultDiv.innerHTML = `
+          <p><strong>Model Prediction:</strong> ${modelLabel}</p>
+          <p><strong>BMI-Based Class:</strong> ${correctedLabel}</p>
+          <p><strong>Readable Category:</strong> ${category}</p>
+          <p><strong>BMI:</strong> ${bmi}</p>
+          <button id="copyBtn">📋 Copy</button>
+        `;
+        resultDiv.style.color = "#333";
 
-      resultDiv.innerHTML = result.prediction
-        ? `Predicted Class: <strong>${result.prediction}</strong><br>Category: <strong>${displayLabel}</strong> <button id="copyBtn">📋 Copy</button>`
-        : `❌ Error: ${result.error || "Something went wrong"}`;
-
-      resultDiv.style.color = result.prediction ? "#a3be8c" : "#bf616a";
-
-      if (result.prediction) {
         document.getElementById("copyBtn").onclick = () => {
-          navigator.clipboard.writeText(`${result.prediction} (${displayLabel})`);
+          navigator.clipboard.writeText(`${correctedLabel} (${category})`);
           document.getElementById("copyBtn").textContent = "✅ Copied";
         };
+
+        if (result.suggestions?.length) {
+          const suggestionsList = result.suggestions.map(s => `<li>🔹 ${s}</li>`).join("");
+          suggestionsDiv.innerHTML = `
+            <div class="bg-[#f5f5f5] p-4 rounded-lg shadow mt-4">
+              <h3 class="text-lg font-medium mb-2">Lifestyle Suggestions</h3>
+              <ul class="list-disc pl-5 text-sm text-gray-800">${suggestionsList}</ul>
+            </div>
+          `;
+        }
+      } else {
+        resultDiv.innerHTML = `❌ Error: ${result.error || "Something went wrong"}`;
+        resultDiv.style.color = "#bf616a";
       }
-
-      // ⬇️ Lifestyle Suggestions
-      if (result.suggestions && result.suggestions.length > 0) {
-        const suggestionsList = result.suggestions
-          .map(s => `<li>🔹 ${s}</li>`)
-          .join("");
-
-        suggestionsDiv.innerHTML = `
-          <div class="bg-[#e5f4ff] p-4 rounded-lg shadow mt-4">
-            <h3 class="text-lg font-medium text-nord14 mb-2">Lifestyle Suggestions</h3>
-            <ul class="list-disc pl-5 text-sm text-gray-800">${suggestionsList}</ul>
-          </div>
-        `;
-      }
-
     } catch (error) {
-      resultDiv.textContent = "Server error. Is Flask running?";
+      resultDiv.textContent = "❌ Server error. Is Flask running?";
       resultDiv.style.color = "#bf616a";
-      suggestionsDiv.innerHTML = "";
     }
   });
 });
-
 
 
