@@ -49,4 +49,4 @@ You’re live! The app will connect to your backend API as defined in script.js.
 🧠 Backend API
 Ensure this is configured in script.js:
 
-fetch("https://your-backend-url.up.railway.app/predict")
+fetch(https://obesity-risk-prediction-model-backend-1-1.onrender.com)"
