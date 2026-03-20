@@ -16,17 +16,6 @@ This is the frontend interface for the Obesity Risk Prediction Model, built usin
   - BMI score
   - Lifestyle improvement suggestions (non-medical)
 
-# Structure
-
-📦 obesity-frontend
-├── index.html # Main HTML layout
-├── style.css # Custom styling
-└── script.js # Logic for form + prediction
-
-# Setup
-
-No build tools required.
-
 # Steps:
 
 1. Clone the repository:
